@@ -56,7 +56,7 @@ spec:
                     [$class: 'GitSCMSource',
                      credentialsId: git_deploy_user_private_key,
                      remote: "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
-            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
+            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             stage('get tag data') {
                 container('jnlp') {
@@ -81,14 +81,14 @@ spec:
                 stage('build ${git_project} in dood') {
                     container('docker-cmd') {
                         dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                            sh("docker build . -f Dockerfile.multi --tag ${git_project}:${TAG_VERSION}")
+                            sh("docker build . -f Dockerfile.multi --tag ${git_project}:${TAG_VERSION} --tag ${git_project}:latest")
                         }
                     }
                 }
 
                 stage('push') {
                     container('docker-cmd') {
-                        dockerx.images_push_multi_registries(["${git_project}:${TAG_VERSION}"], multi_credentials)
+                        dockerx.images_push_multi_registries(["${git_project}:${TAG_VERSION}", "${git_project}:latest"], multi_credentials)
                     }
                 }
 
