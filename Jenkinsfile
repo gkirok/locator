@@ -2,9 +2,9 @@ label = "${UUID.randomUUID().toString()}"
 BUILD_FOLDER = "/go"
 expired=240
 git_project = "locator"
-git_project_user = "v3io"
-git_deploy_user_token = "iguazio-prod-git-user-token"
-git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
+git_project_user = "gkirok"
+git_deploy_user_token = "iguazio-dev-git-user-token"
+git_deploy_user_private_key = "iguazio-dev-git-user-private-key"
 
 podTemplate(label: "${git_project}-${label}", yaml: """
 apiVersion: v1
@@ -56,14 +56,16 @@ spec:
                     [$class: 'GitSCMSource',
                      credentialsId: git_deploy_user_private_key,
                      remote: "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
-            multi_credentials=[pipelinex.DockerRepo.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepo.DOCKER_HUB, pipelinex.DockerRepo.QUAY_IO]
+            multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             stage('get tag data') {
                 container('jnlp') {
                     TAG_VERSION = github.get_tag_version(TAG_NAME)
+                    DOCKER_TAG_VERSION = github.get_tag_version(TAG_NAME)
                     PUBLISHED_BEFORE = github.get_tag_published_before(git_project, git_project_user, "v${TAG_VERSION}", GIT_TOKEN)
 
                     echo "$TAG_VERSION"
+                    echo "$DOCKER_TAG_VERSION"
                     echo "$PUBLISHED_BEFORE"
                 }
             }
@@ -73,7 +75,7 @@ spec:
                     container('jnlp') {
                         dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
                             git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
-                            sh("git checkout v${TAG_VERSION}")
+                            sh("git checkout ${TAG_VERSION}")
                         }
                     }
                 }
@@ -81,14 +83,14 @@ spec:
                 stage("build ${git_project} in dood") {
                     container('docker-cmd') {
                         dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                            sh("docker build . -f Dockerfile.multi --tag ${git_project}:${TAG_VERSION}")
+                            sh("docker build . -f Dockerfile.multi --tag ${git_project}:${DOCKER_TAG_VERSION}")
                         }
                     }
                 }
 
                 stage('push') {
                     container('docker-cmd') {
-                        dockerx.images_push_multi_registries(["${git_project}:${TAG_VERSION}"], multi_credentials)
+                        dockerx.images_push_multi_registries(["${git_project}:${DOCKER_TAG_VERSION}"], multi_credentials)
                     }
                 }
 
