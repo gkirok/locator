@@ -58,7 +58,7 @@ spec:
                      remote: "git@github.com:gkirok/pipelinex.git"])).com.iguazio.pipelinex
             multi_credentials=[pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
-            common.notify_slack {
+            try {
                 stage('get tag data') {
                     container('jnlp') {
                         TAG_VERSION = github.get_tag_version(TAG_NAME)
@@ -103,10 +103,19 @@ spec:
                 } else {
                     stage('warning') {
                         if (PUBLISHED_BEFORE >= expired) {
-                            echo "Tag too old, published before $PUBLISHED_BEFORE minutes."
+                            error("Tag too old, published before $PUBLISHED_BEFORE minutes.")
                         } else {
-                            echo "${TAG_VERSION} is not release tag."
+                            error("${TAG_VERSION} is not release tag.")
                         }
+                    }
+                }
+            } finally {
+                container('jnlp') {
+                    user_id = common.invoked_by_user()
+                    invoked_directly = !common._invoked_by_upstream_job()
+                    if(invoked_directly && (user_id || common._job_failed_or_status_changed())) {
+                        slack_channel = common._get_slack_channel(user_id)
+                        common._slack_send_result(slack_channel)
                     }
                 }
             }
