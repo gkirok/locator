@@ -12,6 +12,6 @@ RUN apt-get update && \
 
 EXPOSE 8080
 
-COPY --from=builder /go/src/github.com/v3io/locator/locatorctl /usr/local/bin/locatorctl
+COPY --from=builder /go/src/github.com/v3io/locator/cmd/locatorctl /usr/local/bin/locatorctl
 
 CMD [ "locatorctl" ]

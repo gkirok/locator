@@ -1,15 +1,19 @@
-GO_BUILD=GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w"
-RELEASE_VERSION = "2.0.0"
-DOCKER_HUB_USER = "iguaziodocker"
+LOCATOR_PATH ?= src/github.com/v3io/locator
+LOCATOR_TAG ?= latest
+LOCATOR_REPOSITORY ?= v3io/
+LOCATOR_BUILD_COMMAND ?= CGO_ENABLED=0 go build -a -installsuffix cgo -ldflags="-s -w" -o $(GOPATH)/bin/locatorctl $(GOPATH)/$(LOCATOR_PATH)/cmd/locatorctl/main.go
 
-all: lint bin image
+.PHONY: all
+all: lint build
 	@echo Done.
 
-bin: ensure-gopath
-	$(GO_BUILD) -o locatorctl cmd/locatorctl/main.go
+.PHONY: build
+build:
+	docker build --tag=$(LOCATOR_REPOSITORY)locator:$(LOCATOR_TAG) .
 
-image:
-	docker build --rm --tag $(DOCKER_HUB_USER)/locator:$(RELEASE_VERSION) .
+.PHONY: ensure-gopath bin
+bin:
+	$(LOCATOR_BUILD_COMMAND)
 
 .PHONY: lint
 lint: ensure-gopath
@@ -55,7 +59,7 @@ test:
 	go test -v ./pkg/...
 
 .PHONY: ensure-gopath
-check-gopath:
+ensure-gopath:
 ifndef GOPATH
-    $(error GOPATH must be set)
+	$(error GOPATH must be set)
 endif
