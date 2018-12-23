@@ -111,12 +111,12 @@ spec:
                 }
             } finally {
                 container('jnlp') {
-                    user_id = common.invoked_by_user()
+                    user_id = env.BUILD_USER_ID
                     invoked_directly = !common._invoked_by_upstream_job()
-                    if(invoked_directly && (user_id || common._job_failed_or_status_changed())) {
+                    //if(invoked_directly && (user_id || common._job_failed_or_status_changed())) {
                         slack_channel = common._get_slack_channel(user_id)
                         common._slack_send_result(slack_channel)
-                    }
+                    //}
                 }
             }
         }
