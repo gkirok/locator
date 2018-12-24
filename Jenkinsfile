@@ -6,7 +6,6 @@ git_project_user = "gkirok"
 git_deploy_user_token = "iguazio-dev-git-user-token"
 git_deploy_user_private_key = "iguazio-dev-git-user-private-key"
 
-withEnv(["hui=$env.BUILD_USER_ID"]) {
 podTemplate(label: "${git_project}-${label}", yaml: """
 apiVersion: v1
 kind: Pod
@@ -66,11 +65,6 @@ spec:
                         DOCKER_TAG_VERSION = github.get_tag_version(TAG_NAME)
                         PUBLISHED_BEFORE = github.get_tag_published_before(git_project, git_project_user, "${TAG_VERSION}", GIT_TOKEN)
 
-                        echo "zho"
-                        echo "$hui"
-                        echo "$env.JOB_NAME"
-                        echo "$env.BUILD_USER_ID"
-                        echo "$BUILD_USER_ID"
                         echo "$TAG_VERSION"
                         echo "$DOCKER_TAG_VERSION"
                         echo "$PUBLISHED_BEFORE"
@@ -117,15 +111,16 @@ spec:
                 }
             } finally {
                 container('jnlp') {
-                    user_id = env.BUILD_USER_ID
-//                    invoked_directly = !common._invoked_by_upstream_job()
-//                    if(invoked_directly && (user_id || common._job_failed_or_status_changed())) {
-//                        slack_channel = common._get_slack_channel(user_id)
-//                        common._slack_send_result(slack_channel)
-//                    }
+                    wrap([$class: 'BuildUser']) {
+                        user_id = env.BUILD_USER_ID
+                    }
+                    invoked_directly = !common._invoked_by_upstream_job()
+                    if(invoked_directly && (user_id || common._job_failed_or_status_changed())) {
+                        slack_channel = common._get_slack_channel(user_id)
+                        common._slack_send_result(slack_channel)
+                    }
                 }
             }
         }
     }
-}
 }
