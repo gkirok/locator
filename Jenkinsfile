@@ -59,6 +59,10 @@ spec:
                      remote       : "git@github.com:gkirok/pipelinex.git"])).com.iguazio.pipelinex
             multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
+            wrap([$class: 'BuildUser']) {
+                sh 'echo "${BUILD_USER}"'
+            }
+
             try {
                 stage('get tag data') {
                     container('jnlp') {
