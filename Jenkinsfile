@@ -1,4 +1,6 @@
 label = "${UUID.randomUUID().toString()}"
+TAG_VERSION
+DOCKER_TAG_VERSION
 BUILD_FOLDER = "/go"
 git_project = "locator"
 git_project_user = "gkirok"
@@ -14,9 +16,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     [$class       : 'GitSCMSource',
                      credentialsId: git_deploy_user_private_key,
                      remote       : "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
-            def TAG_VERSION
-            def DOCKER_TAG_VERSION
-            def multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
+            multi_credentials = [pipelinex.DockerRepoDev.ARTIFACTORY_IGUAZIO, pipelinex.DockerRepoDev.DOCKER_HUB, pipelinex.DockerRepoDev.QUAY_IO]
 
             common.notify_slack {
                 github.init_project(git_project, git_project_user, GIT_TOKEN) {
@@ -24,7 +24,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                         container('jnlp') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
                                 git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
-                                sh("git checkout ${TAG_VERSION}")
+                                common.shellc("git checkout ${TAG_VERSION}")
                             }
                         }
                     }
@@ -32,7 +32,7 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker") {
                     stage("build ${git_project} in dood") {
                         container('docker-cmd') {
                             dir("${BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
-                                sh("LOCATOR_TAG=${DOCKER_TAG_VERSION} LOCATOR_REPOSITORY='' make build")
+                                common.shellc("LOCATOR_TAG=${DOCKER_TAG_VERSION} LOCATOR_REPOSITORY='' make build")
                             }
                         }
                     }
