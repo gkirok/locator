@@ -61,3 +61,4 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
         }
     }
 }
+
