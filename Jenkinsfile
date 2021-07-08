@@ -6,7 +6,7 @@ git_deploy_user_private_key = "iguazio-prod-git-user-private-key"
 
 podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang") {
     node("${git_project}-${label}") {
-        pipelinex = library(identifier: 'pipelinex@_test_gallz', retriever: modernSCM(
+        pipelinex = library(identifier: 'pipelinex@pr', retriever: modernSCM(
                 [$class       : 'GitSCMSource',
                  credentialsId: git_deploy_user_private_key,
                  remote       : "git@github.com:iguazio/pipelinex.git"])).com.iguazio.pipelinex
@@ -14,7 +14,6 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
             withCredentials([
                     string(credentialsId: git_deploy_user_token, variable: 'GIT_TOKEN')
             ]) {
-                echo "${env.GIT_URL}"
                 github.release(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
@@ -43,7 +42,6 @@ podTemplate(label: "${git_project}-${label}", inheritFrom: "jnlp-docker-golang")
                 github.pr(git_project, git_project_user, GIT_TOKEN) {
                     stage('prepare sources') {
                         container('jnlp') {
-                            echo "THIS IS PR"
                             dir("${github.BUILD_FOLDER}/src/github.com/v3io/${git_project}") {
                                 git(changelog: false, credentialsId: git_deploy_user_private_key, poll: false, url: "git@github.com:${git_project_user}/${git_project}.git")
                                 common.shellc("git checkout ${github.PR_COMMIT}")
